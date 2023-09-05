@@ -257,6 +257,35 @@ class LCIExporter:
         temporal_project_dir = os.path.join(bw2data.projects._base_data_dir, safe_filename(temporal_project_name))
         shutil.copytree(original_project_dir, temporal_project_dir, ignore=lambda x, y: ["write-lock"], dirs_exist_ok=True)
         return temporal_project_dir
+    
+    @staticmethod
+    def _compare_imported_to_original_processactivities(imported_processactivities: List[ProcessActivityCreate], original_processactivities: List[ProcessActivityCreate]):
+        imported_processactivities.sort(key=lambda x: x.code, reverse=True) # data needs to be sorted to check if equal
+        original_processactivities.sort(key=lambda x: x.code, reverse=True) # data needs to be sorted to check if equal
+        for imported_activity, activity in zip(imported_processactivities, original_processactivities):
+            imported_activity = imported_activity.dict(by_alias=True, exclude_none=True)
+            activity = activity.dict(by_alias=True, exclude_none=True)
+            # data needs to be sorted to check if equal
+            imported_activity['technosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
+            imported_activity['biosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
+            activity['technosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
+            activity['biosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
+            if activity != imported_activity:
+                for (acitvity_key, acitvity_value), imported_activity_value in zip(activity.items(), imported_activity.values()):
+                    # Check if the exchanges match
+                    if acitvity_key in ['biosphere_exchanges', 'technosphere_exchanges']:
+                        for exchange, imported_exchange in zip(activity[acitvity_key], imported_activity[acitvity_key]):
+                            if len(exchange.keys()) != len(imported_exchange.keys()):
+                                raise Exception('There are not the same exchange variables in the imported and the original data \n \timported: {}\n\toriginal: {}'.format("; ".join(imported_exchange.keys()), "; ".join(exchange.keys())))
+                            for exchange_key in exchange.keys():
+                                if exchange[exchange_key] != imported_exchange[exchange_key]:
+                                    raise Exception('The following activity could not be recreated correctly {} due to exchange {}. \n \t{}: {} != {}'.format(activity['name'], exchange['name'], exchange_key, exchange[exchange_key], imported_exchange[exchange_key]))
+                    # Check if the other activity properties match
+                    else:
+                        if acitvity_value != imported_activity_value:
+                            raise Exception('The following activity could not be recreated correctly {}. \n \t{}: {} != {}'.format(activity['name'], acitvity_key, acitvity_value, imported_activity_value))
+        if imported_processactivities != original_processactivities:
+            raise Exception('The exported data can not completely be recreated.')
 
     def check_activities_completeness(self, processactivities: List[ProcessActivityCreate], projectmetadatacreate: ProjectMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> None:
         """
@@ -283,32 +312,7 @@ class LCIExporter:
             warnings.warn('duplicates found for {}: \n {}'.format(duplicate_fields, duplicate_info['code'].values))
         # Check if the data "re-extracted" (exported-imported-exported) data and the original data are identical
         imported_activities_reextracted, imported_emssions_acitivities_reextracted = self.extract_lci_data(databases='')
-        imported_activities_reextracted.sort(key=lambda x: x.code, reverse=True) # data needs to be sorted to check if equal
-        processactivities.sort(key=lambda x: x.code, reverse=True) # data needs to be sorted to check if equal
-        for imported_activity, activity in zip(imported_activities_reextracted, processactivities):
-            imported_activity = imported_activity.dict(by_alias=True, exclude_none=True)
-            activity = activity.dict(by_alias=True, exclude_none=True)
-            # data needs to be sorted to check if equal
-            imported_activity['technosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
-            imported_activity['biosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
-            activity['technosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
-            activity['biosphere_exchanges'].sort(key=lambda x: x['code'], reverse=True)
-            if activity != imported_activity:
-                for (acitvity_key, acitvity_value), imported_activity_value in zip(activity.items(), imported_activity.values()):
-                    # Check if the exchanges match
-                    if acitvity_key in ['biosphere_exchanges', 'technosphere_exchanges']:
-                        for exchange, imported_exchange in zip(activity[acitvity_key], imported_activity[acitvity_key]):
-                            if len(exchange.keys()) != len(imported_exchange.keys()):
-                                raise Exception('There are not the same exchange variables in the imported and the original data \n \timported: {}\n\toriginal: {}'.format("; ".join(imported_exchange.keys()), "; ".join(exchange.keys())))
-                            for exchange_key in exchange.keys():
-                                if exchange[exchange_key] != imported_exchange[exchange_key]:
-                                    raise Exception('The following activity could not be recreated correctly {} due to exchange {}. \n \t{}: {} != {}'.format(activity['name'], exchange['name'], exchange_key, exchange[exchange_key], imported_exchange[exchange_key]))
-                    # Check if the other activity properties match
-                    else:
-                        if acitvity_value != imported_activity_value:
-                            raise Exception('The following activity could not be recreated correctly {}. \n \t{}: {} != {}'.format(activity['name'], acitvity_key, acitvity_value, imported_activity_value))
-        if imported_activities_reextracted != processactivities:
-            raise Exception('The exported data can completely be recreated.')
+        self._compare_imported_to_original_processactivities(imported_processactivities=imported_activities_reextracted, original_processactivities=processactivities)
         # ATTN: Implement test for imported_emssions_acitivities_reextracted as well.
         # Leave the temporal brightway project directory
         bw2data.project.projects._restore_orig_directory()

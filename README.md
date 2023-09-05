@@ -1,5 +1,23 @@
 # External database package
 
+## Set up
+1. Create a new environment, e.g., using conda
+```bash
+conda create -n bw2extdb
+```
+2. Acitvate the environment
+```bash
+cond activate bw2extdb
+```
+3. Install pip in conda
+```bash
+conda install pip
+```
+4. Install the `bw2extdb` package from git
+```bash
+pip install git+https://github.com/Blowgren/bw2extdb@main
+```
+
 ## Structure
 The current package consists of:
 - The core backend which is the sub-package ```exportImport```, consisting of an exporting module ```exporter``` and and importer module ```importer```. Both modules are self built and orientate themselves after the workflow of brightway importer and exporter classes. 
