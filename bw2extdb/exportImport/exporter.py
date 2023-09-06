@@ -1,4 +1,4 @@
-import datetime
+from datetime import date
 import atexit
 import shutil
 import warnings
@@ -79,7 +79,7 @@ class LCIExporter:
         # Create project metadata
         project_metadata = exporter.create_metadata(
             project_name="MyLCIProject",
-            project_final_date=datetime.datetime(2023, 8, 1),
+            project_final_date=datetime.date(2023, 8, 1),
             description="A sample LCI project for demonstration.",
             user_name="John Doe",
         )
@@ -347,7 +347,7 @@ class LCIExporter:
     def create_metadata(
         self, 
         project_name: str, 
-        project_final_date: datetime, 
+        project_final_date: date, 
         description: str,
         user_name: str,
         keywords_input: Optional[List] = [],
@@ -357,7 +357,7 @@ class LCIExporter:
 
         Args:
             project_name (str): The name of the current project in the application.
-            project_final_date (datetime): The final date of the LCI project.
+            project_final_date (date): The final date of the LCI project.
             description (str): A description of the LCI project.
             user_name (str): The name of the user creating the LCI project.
             keywords_input (Optional[List], optional): A list of keywords associated with the LCI project.

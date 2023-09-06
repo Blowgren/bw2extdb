@@ -9,6 +9,9 @@ def create_MSsql_engine(user, password, server, database) -> Engine:
     # engine = create_engine('mssql+pyodbc://VITODB24DEV/SesamLCA')
     return engine
 
+def create_engine_from_url(url:str) -> Engine:
+    engine = create_engine(url)
+    return engine
 
 def create_sqlite_engine(sqlite_file_path:str) -> Engine:
     sqlite_url = f"sqlite:///{sqlite_file_path}"
@@ -20,13 +23,16 @@ def create_inmemory_sqlite_engine() -> Engine:
     engine = create_engine(sqlite_url, echo=True)
     return engine
 
-def test_connection(engine):
+def test_connection(engine) -> bool:
+    connection_success = True
     try:
         engine.connect()
         print("connected successfully to database")
     except SQLAlchemyError as err:
         print('could not connect to database successfully')
         print("error", err.__cause__) 
+        connection_success = False
+    return connection_success
 
 def create_db_and_tables(engine):
     SQLModel.metadata.create_all(engine)

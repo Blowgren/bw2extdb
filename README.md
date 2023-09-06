@@ -1,4 +1,6 @@
-# External database package
+# Brightway external SQL database package
+
+This package allows the import and export of sql databases to and from Brightway. This is NOT a generalized SQL backend but a step in that direction.
 
 ## Set up
 1. Create a new environment, e.g., using conda
@@ -7,7 +9,7 @@ conda create -n bw2extdb
 ```
 2. Acitvate the environment
 ```bash
-cond activate bw2extdb
+conda activate bw2extdb
 ```
 3. Install pip in conda
 ```bash
@@ -18,14 +20,7 @@ conda install pip
 pip install git+https://github.com/Blowgren/bw2extdb@main
 ```
 
-## Structure
-The current package consists of:
-- The core backend which is the sub-package ```exportImport```, consisting of an exporting module ```exporter``` and and importer module ```importer```. Both modules are self built and orientate themselves after the workflow of brightway importer and exporter classes. 
-- An app which works as a GUI for the importing and exporting routine found in the ```app``` module. 
-- Example scripts found in ```examples```
-- The start of a testing structure in ```tests```
-
-## App
+## Quick start - App
 The app is an interface and GUI which helps the user to apply the functions for importing and exporting data. The same functions can also be called with a jupyter notebook.
 
 To start the app:
@@ -34,9 +29,15 @@ To start the app:
 3. start the app directly with th bash-command
 
 ```bash
-bw2extdb
+bw2extdb-app
 ```
 
+## Structure
+The current package consists of:
+- The core backend which is the sub-package ```exportImport```, consisting of an exporting module ```exporter``` and and importer module ```importer```. Both modules are self built and orientate themselves after the workflow of brightway importer and exporter classes. 
+- An app which works as a GUI for the importing and exporting routine found in the ```app``` module. 
+- Example scripts found in ```examples```
+- The start of a testing structure in ```tests```
 
 ## Concept
 The general idea is to:

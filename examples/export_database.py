@@ -10,6 +10,8 @@ import bw2data
 
 """ Download and set up the database for testing """
 project_name = 'bw2extdb_test'
+if project_name in bw2data.projects:
+    bw2data.projects.delete_project(project_name, delete_dir=True)
 bw2data.projects.set_current(project_name)
 bw2io.bw2setup()
 bw2io.data.add_example_database(overwrite=False)
@@ -17,7 +19,7 @@ bw2io.data.add_example_database(overwrite=False)
 """ Define the information for the testing """
 dbs = ['Mobility example']
 biosphere_version = '3.8'
-project_final_date = datetime.datetime(2022,5,11)
+project_final_date = datetime.date(2022,5,11)
 
 """ delete the database if it exists """
 # Set the SQLlite path

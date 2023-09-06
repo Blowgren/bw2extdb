@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import date
 from sqlmodel import Field, Relationship, SQLModel
 
 # TO-DO:
@@ -140,7 +140,7 @@ class DatabaseDependancyRead(DatabaseDependancyBase):
 class ProjectMetadataBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     project_name: str
-    project_final_date: datetime
+    project_final_date: date
     description: str
     version: float
     user_name: str

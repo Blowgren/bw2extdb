@@ -6,7 +6,8 @@ import pathlib
 
 project_name = 'import_test'
 project_database_name = "test exporting using Mobility example"
-
+if project_name in bw2data.projects:
+    bw2data.projects.delete_project(project_name, delete_dir=True)
 bw2data.projects.set_current(project_name)
 bw2setup()
 

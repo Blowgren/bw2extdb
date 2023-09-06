@@ -17,6 +17,8 @@ setup(
         "sqlmodel",
         # for ipynb:
         "ipykernel",
+        # for database:
+        'psycopg2',
     ],
    entry_points={
         "console_scripts": [
