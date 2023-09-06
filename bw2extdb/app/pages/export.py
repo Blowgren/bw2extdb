@@ -15,7 +15,7 @@ class OutputCapture:
         return self._output.getvalue()
 
 
-st.header('SESAM LCI data export')
+st.header('SQL database export')
 project = st.selectbox("Select Project", [project[0] for project in bw2data.projects.report()])
 selected_project = st.session_state.get('selected_project', None)
 
@@ -24,7 +24,7 @@ if project != selected_project:
     st.session_state.selected_databases = []
 bw2data.projects.set_current(project)
 selected_databases = st.multiselect("Select Databases", bw2data.databases)
-
+biosphere_version = st.selectbox('biosphere version', ['3.8', '3.9'])
 # ATTN: add warning if no data is specified
 project_description = st.text_area("Project Description")
 project_name = st.text_input("Project Name")
@@ -40,16 +40,19 @@ if st.button("Export"):
     sys.stdout = capture
 
     # try:
-    LCIExporter = exporter.LCIExporter(project_name=project, databases=selected_databases)
+    if 'engine' not in st.session_state:
+        st.error('Please connect to a database first')
+        st.session_state.engine = None
+    LCIExporter = exporter.LCIExporter(project_name=project, databases=selected_databases, engine=st.session_state.engine, biosphere_version=biosphere_version)
     processactivities, emissionactivities = LCIExporter.extract_lci_data()
     project_metadata = LCIExporter.create_metadata(
         project_name, 
         project_final_date=final_date, 
         description=project_description,
-        keywords=keywords,
+        keywords_input=keywords,
         user_name=user_name,
         )
-    LCIExporter.export_to_sql(process_activities=processactivities, projectmetadatacreate=project_metadata, emissionactivities=emissionactivities)
+    LCIExporter.export_to_sql(processactivities=processactivities, project_metadata=project_metadata, emissionactivities=emissionactivities)
     # except Exception as e:
     #     print(f'Error: {str(e)}')
 

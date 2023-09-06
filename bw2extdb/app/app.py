@@ -7,12 +7,12 @@ def main():
     st.title("Brightway Import Export App")
     st.markdown(
         """
-            This app is a GUI for the use of the python package SESAMlcidata. There are two main functionalities **export** and **import**. 
+            This app is a GUI for the use of the python package `bw2extdb`. There are two main functionalities **export** and **import**. 
             They can be accessed in the menu and are described in more detail below.
-            # Exporter
-            Exports one or multiple databases of a brightway project into an external database.
-            # Importer
-            Imports a database from an external database, which is created using the **exporter** workflow.
+            ## Exporter
+            Exports one or multiple databases of a brightway project into an external SQL database.
+            ## Importer
+            Imports a database from an external SQL database, which is created using the **exporter** workflow.
         """
     )
     # st.sidebar.markdown("# Main page")
