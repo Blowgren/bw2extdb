@@ -24,8 +24,8 @@ if 'engine' not in st.session_state:
     st.session_state.engine = None
 else:
     crud = Crud(st.session_state.engine)
-    projectmetadatalist = crud.read_all_projectmetadata()
-    project_names = [projectmetadata.project_name for projectmetadata in projectmetadatalist]
+    datasetmetadatalist = crud.read_all_datasetmetadata()
+    project_names = [datasetmetadata.project_name for datasetmetadata in datasetmetadatalist]
 database = st.selectbox("Select remote database", project_names)
 project = st.selectbox("Select Brightway project to import to", [project[0] for project in bw2data.projects.report()])
 bw2data.projects.set_current(project)
@@ -86,7 +86,7 @@ if st.button("Import"):
         if 'engine' not in st.session_state:
             st.error('Please connect to a database first')
         else:
-            LCIExporter_app = importer.LCIImporterSql(project_name=project, project_database_name=database, engine=st.session_state.engine)
+            LCIExporter_app = importer.LCIImporterSql(project_name=project, dataset_name=database, engine=st.session_state.engine)
             print('statistics after initial data loading:')
             LCIExporter_app.statistics()
             if link_biosphere:

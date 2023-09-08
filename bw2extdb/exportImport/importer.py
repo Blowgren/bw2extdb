@@ -18,28 +18,28 @@ class LCIImporterSql(LCIImporter):
 
     Args:
         project_name (str): The name of the current project in the application.
-        project_database_name (str): The name of the project's database.
+        dataset_name (str): The name of the project's database.
         engine (Engine): The sqlalchemy or sqlmodel engine object linking to the sql database
 
     Attributes:
         project_name (str): The name of the current project in the application.
-        project_database_name (str): The name of the project's database.
+        dataset_name (str): The name of the dataset's database.
         crud (obj): The create-read-update-delete object for the sql-database
         db_name (str): The name of the database from the project metadata.
-        metadata (dict): The project metadata.
+        metadata (dict): The dataset metadata.
 
     Methods:
-        get_project_metadata_id(self, project_name: str) -> int:
-            Get the metadata ID of the project from the specified project name.
+        get_datasetmetadata_id(self, dataset_name: str) -> int:
+            Get the metadata ID of the dataset from the specified dataset name.
 
-        process_activities(self, project_metadata_id: int) -> List[dict]:
-            Process the activities and their exchanges from the specified project metadata ID.
+        process_activities(self, datasetmetadata_id: int) -> List[dict]:
+            Process the activities and their exchanges from the specified dataset metadata ID.
 
-        get_database(self, project_metadata_id: int) -> Tuple[str, dict]:
-            Get the name and metadata of the database from the specified project metadata ID.
+        get_database(self, datasetmetadata_id: int) -> Tuple[str, dict]:
+            Get the name and metadata of the database from the specified dataset metadata ID.
 
-        get_database_dependencies(self, project_metadata_id: int) -> List[str]:
-            Get a list of background databases on which the specified project metadata depends.
+        get_database_dependencies(self, datasetmetadata_id: int) -> List[str]:
+            Get a list of background databases on which the specified dataset metadata depends.
 
         get_project_parameters(self) -> None:
             Get project-specific parameters. TO-DO: Implement this method.
@@ -55,7 +55,7 @@ class LCIImporterSql(LCIImporter):
 
     Examples:
         # Initialize the LCIImporterSql
-        importer_sql = LCIImporterSql(project_name="MyLCIProject", project_database_name="MyLCIDatabase", sql_database="path/to/database.db")
+        importer_sql = LCIImporterSql(project_name="MyLCIProject", dataset_name="MyLCIDatabase", sql_database="path/to/database.db")
 
         # Check imported data
         importer_sql.check_imported_data()
@@ -65,93 +65,94 @@ class LCIImporterSql(LCIImporter):
     """
 
     def __init__(
-        self, project_name: str, project_database_name: str, engine: Engine
+        self, project_name: str, dataset_name: str, engine: Engine
     ):
         # This class is structural copy from bw2io.importers.excel.ExcelImporter
         # https://github.com/brightway-lca/brightway2-io/blob/f2f5f57f437a6a9bbe584a428f6cca3100edceb2/bw2io/importers/excel.py
         self.project_name = project_name
-        self.project_database_name = project_database_name
+        self.dataset_name = dataset_name
         self.crud = Crud(engine)
         bw2data.projects.set_current(project_name)
-        project_metadata_id = self.get_project_metadata_id(project_database_name)
-        self.db_name, self.metadata = self.get_database(project_metadata_id)
+        datasetmetadata_id = self.get_datasetmetadata_id(dataset_name)
+        self.db_name, self.metadata = self.get_database(datasetmetadata_id)
         self.project_parameters = self.get_project_parameters()
         self.database_parameters = self.get_database_parameters()
-        self.data = self.process_activities(project_metadata_id)
-        self.database_dependencies = self.get_database_dependencies(project_metadata_id)
+        self.data = self.process_activities(datasetmetadata_id)
+        self.database_dependencies = self.get_database_dependencies(datasetmetadata_id)
 
-    def get_project_metadata_id(self, project_name: str):
+    def get_datasetmetadata_id(self, dataset_name: str):
         """
-        Get the metadata ID of the project from the specified project name.
+        Get the metadata ID of the dataset from the specified dataset name.
 
         Args:
-            project_name (str): The name of the current project in the application.
+            dataset_name (str): The name of the current dataset in the application.
 
         Returns:
-            int: The metadata ID of the project.
+            int: The metadata ID of the dataset.
         """
-        projectmetadata = self.crud.read_projectmetadata(projectmetadata_key=project_name)
-        return projectmetadata.id
+        datasetmetadata = self.crud.read_datasetmetadata(datasetmetadata_key=dataset_name)
+        return datasetmetadata.id
 
-    def process_activities(self, project_metadata_id: int) -> list[dict]:
+    def process_activities(self, datasetmetadata_id: int) -> list[dict]:
         """
-        Process the activities and their exchanges from the specified project metadata ID.
+        Process the activities and their exchanges from the specified dataset metadata ID.
 
         Args:
-            project_metadata_id (int): The metadata ID of the project.
+            datasetmetadata_id (int): The metadata ID of the dataset.
 
         Returns:
             List[dict]: A list of dictionaries representing processed activities.
         """
-        processactivities = self.crud.read_process_activities(projectmetadata_key=project_metadata_id)
+        processactivities = self.crud.read_process_activities(datasetmetadata_key=datasetmetadata_id)
         activities_dicts = []
         for process_activity_raw in processactivities:
             processactivity = process_activity_raw.dict(by_alias=True, exclude_none=True)
             processactivity["exchanges"] = processactivity["biosphere_exchanges"] + processactivity["technosphere_exchanges"]
             processactivity.pop("biosphere_exchanges")
             processactivity.pop("technosphere_exchanges")
-            processactivity["database"] = self.project_database_name
+            processactivity["database"] = self.dataset_name
             for exchange in processactivity["exchanges"]:
                 if exchange["categories"]:
                     exchange["categories"] = [category["name"] for category in exchange["categories"]]
             activities_dicts.append(processactivity)
-        emissionactivities = self.crud.read_emission_activities(projectmetadata_key=project_metadata_id)
+        emissionactivities = self.crud.read_emission_activities(datasetmetadata_key=datasetmetadata_id)
         for emission_activity_raw in emissionactivities:
             emissionactivity = emission_activity_raw.dict(by_alias=True, exclude_none=True)
-            emissionactivity["database"] = self.project_database_name
+            emissionactivity["database"] = self.dataset_name
             if emissionactivity["categories"]:
                 emissionactivity["categories"] = [category["name"] for category in emissionactivity["categories"]]
             activities_dicts.append(emissionactivity)
         return activities_dicts
 
-    def get_database(self, project_metadata_id: int) -> tuple[str, dict]:
+    def get_database(self, datasetmetadata_id: int) -> tuple[str, dict]:
         """
-        Get the name and metadata of the database from the specified project metadata ID.
+        Get the name and metadata of the database from the specified dataset metadata ID.
 
         Args:
-            project_metadata_id (int): The metadata ID of the project.
+            datasetmetadata_id (int): The metadata ID of the dataset.
 
         Returns:
             Tuple[str, dict]: A tuple containing the name and metadata of the database.
         """
-        projectmetadata = self.crud.read_projectmetadata(projectmetadata_key=project_metadata_id)
-        metadata = projectmetadata.dict(by_alias=True, exclude_none=True)
+        datasetmetadata = self.crud.read_datasetmetadata(datasetmetadata_key=datasetmetadata_id)
+        metadata = datasetmetadata.dict(by_alias=True, exclude_none=True)
         # ATTN: JSON is not serilizable with datetime so the datetime needs to be stored as a string, maybe a more generic solution possible?
-        metadata["project_final_date"] = str(metadata["project_final_date"])
-        return projectmetadata.project_name, metadata
+        metadata["dataset_final_date"] = str(metadata["dataset_final_date"])
+        return datasetmetadata.dataset_name, metadata
 
-    def get_database_dependencies(self, project_metadata_id: int) -> list[str]:
+    def get_database_dependencies(self, datasetmetadata_id: int) -> list[str]:
         """
-        Get a list of background databases on which the specified project metadata depends.
+        Get a list of background databases on which the specified dataset metadata depends.
 
         Args:
-            project_metadata_id (int): The metadata ID of the project.
+            datasetmetadata_id (int): The metadata ID of the dataset.
 
         Returns:
-            List[str]: A list of background database names on which the project depends.
+            List[str]: A list of background database names on which the dataset depends.
         """
-        projectmetadata = self.crud.read_projectmetadata(projectmetadata_key=project_metadata_id).dict(by_alias=True, exclude_none=True)
-        databasedependencies = [databasedependency['database_name'] for databasedependency in projectmetadata['databasedependencies']]
+        datasetmetadata = self.crud.read_datasetmetadata(datasetmetadata_key=datasetmetadata_id).dict(by_alias=True, exclude_none=True)
+        databasedependencies = [databasedependency['database_name'] for databasedependency in datasetmetadata['databasedependencies']]
+        print('The imported dataset is dependent on: \n{}'.format('\n\t'.join(databasedependencies)))
         return databasedependencies
 
     def get_project_parameters(self):

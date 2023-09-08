@@ -52,16 +52,16 @@ class LCIExporter:
 
         create_metadata(
             self,
-            project_name: str,
-            project_final_date: datetime,
+            dataset_name: str,
+            dataset_final_date: datetime,
             description: str,
             user_name: str,
             keywords_input: Optional[List] = [],
-        ) -> ProjectMetadata:
-            Creates metadata for the exported data and project.
+        ) -> DatasetMetadata:
+            Creates metadata for the exported data and dataset.
 
-        check_projectmetadata_completeness(self, projectmetadata: ProjectMetadata):
-            Performs checks on the completeness of the project metadata.
+        check_datasetmetadata_completeness(self, datasetmetadata: DatasetMetadata):
+            Performs checks on the completeness of the dataset metadata.
 
         create_version(self) -> float:
             Generates and returns a version number for the exported data format.
@@ -76,17 +76,17 @@ class LCIExporter:
         # Extract LCI data
         activities_data = exporter.extract_lci_data()
 
-        # Create project metadata
-        project_metadata = exporter.create_metadata(
-            project_name="MyLCIProject",
-            project_final_date=datetime.date(2023, 8, 1),
-            description="A sample LCI project for demonstration.",
+        # Create dataset metadata
+        datasetmetadata = exporter.create_metadata(
+            dataset_name="MyLCIProject",
+            dataset_final_date=datetime.date(2023, 8, 1),
+            description="A sample LCI dataset for demonstration.",
             user_name="John Doe",
         )
 
         # Perform completeness checks
         exporter.check_activities_completeness(activities_data)
-        exporter.check_projectmetadata_completeness(project_metadata)
+        exporter.check_datasetmetadata_completeness(datasetmetadata)
 
     """
 
@@ -233,19 +233,19 @@ class LCIExporter:
         return processactivities, emissionactivities
 
     @staticmethod
-    def create_in_memory_sqlite_database(processactivities: List[ProcessActivityCreate], projectmetadatacreate: ProjectMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> Tuple[Engine, ProjectMetadata]:
+    def create_in_memory_sqlite_database(processactivities: List[ProcessActivityCreate], datasetmetadatacreate: DatasetMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> Tuple[Engine, DatasetMetadata]:
         # Creates in memory sql database
         engine_temp = create_inmemory_sqlite_engine()
         create_db_and_tables(engine_temp)
         crud_temp = Crud(engine_temp)
-        projectmetadatacreate_copy = copy.deepcopy(projectmetadatacreate)
-        projectmetadatacreate_copy.project_name = '' # Use an empty name to create backwards compatability, since the uuid id code+database
-        projectmetadata = crud_temp.create_projectmetadata(projectmetadatacreate=projectmetadatacreate_copy)
+        datasetmetadatacreate_copy = copy.deepcopy(datasetmetadatacreate)
+        datasetmetadatacreate_copy.dataset_name = '' # Use an empty name to create backwards compatability, since the uuid id code+database
+        datasetmetadata = crud_temp.create_datasetmetadata(datasetmetadatacreate=datasetmetadatacreate_copy)
         processactivities_copy = copy.deepcopy(processactivities)
         emissionactivities_copy = copy.deepcopy(emissionactivities)
-        crud_temp.create_process_activities(activities=processactivities_copy, projectmetadata_id=projectmetadata.id)
-        crud_temp.create_emission_activities(activities=emissionactivities_copy, projectmetadata_id=projectmetadata.id)
-        return engine_temp, projectmetadata
+        crud_temp.create_process_activities(activities=processactivities_copy, datasetmetadata_id=datasetmetadata.id)
+        crud_temp.create_emission_activities(activities=emissionactivities_copy, datasetmetadata_id=datasetmetadata.id)
+        return engine_temp, datasetmetadata
     
     @staticmethod
     def create_temporal_copy_of_current_BW_project(temporal_project_name:str) -> str:
@@ -287,27 +287,27 @@ class LCIExporter:
         if imported_processactivities != original_processactivities:
             raise Exception('The exported data can not completely be recreated.')
 
-    def check_activities_completeness(self, processactivities: List[ProcessActivityCreate], projectmetadatacreate: ProjectMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> None:
+    def check_activities_completeness(self, processactivities: List[ProcessActivityCreate], datasetmetadatacreate: DatasetMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> None:
         """
         Performs checks on the completeness of the exported activities.
 
         Args:
             activities (List[Activity]): A list of Activity objects representing the exported LCI data.
-            projectmetadatacreate (ProjectMetadataCreate): The projectmetadata object created for the exported LCI database.
+            datasetmetadatacreate (DatasetMetadataCreate): The datasetmetadata object created for the exported LCI database.
 
         Returns:
             None
         """
-        engine_temp, projectmetadata_temp = self.create_in_memory_sqlite_database(processactivities, projectmetadatacreate, emissionactivities=emissionactivities)
+        engine_temp, datasetmetadata_temp = self.create_in_memory_sqlite_database(processactivities, datasetmetadatacreate, emissionactivities=emissionactivities)
         temporal_project_name = f"{self.project_name}_for_completeness_check_temporal"
         self.create_temporal_copy_of_current_BW_project(temporal_project_name)
         bw2data.projects.set_current(temporal_project_name)
         # Import the data from the in memory sqlite database
-        LCIImporter_temp = LCIImporterSql(temporal_project_name, projectmetadata_temp.project_name, engine_temp)
+        LCIImporter_temp = LCIImporterSql(temporal_project_name, datasetmetadata_temp.dataset_name, engine_temp)
         LCIImporter_temp.check_matching_of_imported_data()
         # Check if all activities have unique data needed for matching later on
         unique_fields = ['reference product', 'unit', 'location', 'name']
-        imported_activities = pd.DataFrame(bw2data.Database(projectmetadata_temp.project_name))
+        imported_activities = pd.DataFrame(bw2data.Database(datasetmetadata_temp.dataset_name))
         for duplicate_fields, duplicate_info in imported_activities[imported_activities.duplicated(subset=unique_fields, keep=False)].groupby(unique_fields):
             warnings.warn('duplicates found for {}: \n {}'.format(duplicate_fields, duplicate_info['code'].values))
         # Check if the data "re-extracted" (exported-imported-exported) data and the original data are identical
@@ -346,25 +346,25 @@ class LCIExporter:
 
     def create_metadata(
         self, 
-        project_name: str, 
-        project_final_date: date, 
+        dataset_name: str, 
+        dataset_final_date: date, 
         description: str,
         user_name: str,
         keywords_input: Optional[List] = [],
-    ) -> ProjectMetadataCreate:
+    ) -> DatasetMetadataCreate:
         """
-        Creates metadata for the exported data and project.
+        Creates metadata for the exported data and dataset.
 
         Args:
-            project_name (str): The name of the current project in the application.
-            project_final_date (date): The final date of the LCI project.
-            description (str): A description of the LCI project.
-            user_name (str): The name of the user creating the LCI project.
-            keywords_input (Optional[List], optional): A list of keywords associated with the LCI project.
+            dataset_name (str): The name of the current dataset in the application.
+            dataset_final_date (date): The final date of the LCI dataset.
+            description (str): A description of the LCI dataset.
+            user_name (str): The name of the user creating the LCI dataset.
+            keywords_input (Optional[List], optional): A list of keywords associated with the LCI dataset.
                 Defaults to [].
 
         Returns:
-            projectmetadatacreate: The created ProjectMetadata object containing project metadata.
+            datasetmetadatacreate: The created DatasetMetadataCreate object containing dataset metadata.
         """
         # Create the dependencies
         databasedependancies = []
@@ -375,24 +375,24 @@ class LCIExporter:
         for keyword_input in keywords_input:
             keyword = KeywordCreate(name=keyword_input)
             keywords.append(keyword)
-        projectmetadatacreate = ProjectMetadataCreate(
-            project_name = project_name,
-            project_final_date = project_final_date,
+        datasetmetadatacreate = DatasetMetadataCreate(
+            dataset_name = dataset_name,
+            dataset_final_date = dataset_final_date,
             description = description,
             version = self.create_version(),
             user_name = user_name
             )
-        projectmetadatacreate.update_forward_refs()
-        projectmetadatacreate.keywords=keywords
-        projectmetadatacreate.databasedependencies=databasedependancies
+        datasetmetadatacreate.update_forward_refs()
+        datasetmetadatacreate.keywords=keywords
+        datasetmetadatacreate.databasedependencies=databasedependancies
 
-        return projectmetadatacreate
+        return datasetmetadatacreate
     
-    def check_projectmetadata_completeness(self, projectmetadata:ProjectMetadata):
+    def check_datasetmetadata_completeness(self, datasetmetadata:DatasetMetadata):
         if len(self.databases) > 1:
             warnings.warn("There are multiple databases specified to be imported, they will be imported as one database.")
         # TO-DO: Write method
-        # Check if there is a project with the same name or contains the same name
+        # Check if there is a dataset with the same name or contains the same name
         
         # Check if the background databases are available databases, either based on a "trusted" list, or with user interaction
         # Suggest that the other background database should also be imported
@@ -403,18 +403,18 @@ class LCIExporter:
         version = 0.0
         return version
     
-    def export_to_sql(self, processactivities: List[ProcessActivityCreate], project_metadata: ProjectMetadata, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> None:
+    def export_to_sql(self, processactivities: List[ProcessActivityCreate], datasetmetadata: DatasetMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> None:
         """
         Exports the metadata and the activity data to the sql database represented by the engine.
 
         Args:
             processactivities (List[ProcessActivityCreate]): A list of process Activity objects representing the exported LCI data.
-            projectmetadata (ProjectMetadata): The projectmetadata object created for the exported LCI database.
+            datasetmetadata (DatasetMetadataCreate): The datasetmetadata object created for the exported LCI database.
             emissionactivities (List[EmissionActivityCreate]): A list of emission Activity objects representing the exported LCI data.
 
         Returns:
             None
         """
-        project_metadata = self.crud.create_projectmetadata(projectmetadatacreate=project_metadata)
-        self.crud.create_process_activities(activities=processactivities, projectmetadata_id=project_metadata.id)
-        self.crud.create_emission_activities(activities=emissionactivities, projectmetadata_id=project_metadata.id)
+        datasetmetadata = self.crud.create_datasetmetadata(datasetmetadatacreate=datasetmetadata)
+        self.crud.create_process_activities(activities=processactivities, datasetmetadata_id=datasetmetadata.id)
+        self.crud.create_emission_activities(activities=emissionactivities, datasetmetadata_id=datasetmetadata.id)

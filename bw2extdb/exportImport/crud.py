@@ -8,21 +8,22 @@ class Crud():
     def __init__(self, engine) -> None:
         self.engine = engine
 
-    def create_process_activities(self, activities: List[ProcessActivityCreate], projectmetadata_id:int) -> None:
+    def create_process_activities(self, activities: List[ProcessActivityCreate], datasetmetadata_id:int) -> None:
         """
         Creates activities and their related biosphere and technosphere exchanges in the database.
 
         Parameters:
             activities (List[ProcessActivityCreate]): A list of ProcessActivityCreate objects representing the activities to be created.
-            projectmetadata_id (int): The ID of the ProjectMetadata associated with the activities.
+            datasetmetadata_id (int): The ID of the DatasetMetadata associated with the activities.
 
         Returns:
             None
         """
+        # ATTN: This method should only have one commit, by using relationships in the database models
         with Session(self.engine) as session:
             for activity_data in activities:
                 activity = ProcessActivity.from_orm(activity_data)
-                activity.projectmetadata_id = projectmetadata_id
+                activity.datasetmetadata_id = datasetmetadata_id
                 session.add(activity)
                 session.commit()
                 session.refresh(activity)
@@ -53,13 +54,13 @@ class Crud():
                 session.commit()
             # return activities
 
-    def create_emission_activities(self, activities: List[EmissionActivityCreate], projectmetadata_id:int) -> None:
+    def create_emission_activities(self, activities: List[EmissionActivityCreate], datasetmetadata_id:int) -> None:
         """
         Creates emission activities in the database.
 
         Parameters:
             activities (List[EmissionActivityCreate]): A list of EmissionActivityCreate objects representing the activities to be created.
-            projectmetadata_id (int): The ID of the ProjectMetadata associated with the activities.
+            datasetmetadata_id (int): The ID of the DatasetMetadata associated with the activities.
 
         Returns:
             None
@@ -67,76 +68,76 @@ class Crud():
         with Session(self.engine) as session:
             for activity_data in activities:
                 activity = EmissionActivity.from_orm(activity_data)
-                activity.projectmetadata_id = projectmetadata_id
+                activity.datasetmetadata_id = datasetmetadata_id
                 session.add(activity)
                 session.commit()
             # return activities
         
-    def create_projectmetadata(self, projectmetadatacreate: ProjectMetadataCreate) -> None:
+    def create_datasetmetadata(self, datasetmetadatacreate: DatasetMetadataCreate) -> None:
         """
-        Creates a ProjectMetadata object in the database.
+        Creates a DatasetMetadata object in the database.
 
         Parameters:
-            projectmetadatacreate (ProjectMetadataCreate): The ProjectMetadataCreate object representing the project metadata.
+            datasetmetadatacreate (DatasetMetadataCreate): The DatasetMetadataCreate object representing the dataset metadata.
 
         Returns:
-            ProjectMetadata: The created ProjectMetadata object.
+            DatasetMetadata: The created DatasetMetadata object.
         """
         with Session(self.engine) as session:
-            projectmetadata = ProjectMetadata.from_orm(projectmetadatacreate)
-            session.add(projectmetadata)
+            datasetmetadata = DatasetMetadata.from_orm(datasetmetadatacreate)
+            session.add(datasetmetadata)
             session.commit()
-            session.refresh(projectmetadata)
-            if projectmetadatacreate.databasedependencies:
-                for databasedependency_data in projectmetadatacreate.databasedependencies:
-                    databasedependency_data.projectmetadata_id = projectmetadata.id
+            session.refresh(datasetmetadata)
+            if datasetmetadatacreate.databasedependencies:
+                for databasedependency_data in datasetmetadatacreate.databasedependencies:
+                    databasedependency_data.datasetmetadata_id = datasetmetadata.id
                     databasedependency = DatabaseDependancy.from_orm(databasedependency_data)
                     session.add(databasedependency)
-            if projectmetadatacreate.keywords:
-                for keyword_data in projectmetadatacreate.keywords:
-                    keyword_data.projectmetadata_id = projectmetadata.id
+            if datasetmetadatacreate.keywords:
+                for keyword_data in datasetmetadatacreate.keywords:
+                    keyword_data.datasetmetadata_id = datasetmetadata.id
                     keyword = Keyword.from_orm(keyword_data)
                     session.add(keyword)
             session.commit()
-            session.refresh(projectmetadata)
-            return projectmetadata
+            session.refresh(datasetmetadata)
+            return datasetmetadata
 
-    def read_projectmetadata(self, projectmetadata_key: Union[int, str]) -> ProjectMetadataRead:
+    def read_datasetmetadata(self, datasetmetadata_key: Union[int, str]) -> DatasetMetadataRead:
         """
-        Retrieves the ProjectMetadataRead object from the database based on the provided key.
+        Retrieves the DatasetMetadataRead object from the database based on the provided key.
 
         Parameters:
-            projectmetadata_key (Union[int, str]): The ID or name of the ProjectMetadata to be retrieved.
+            datasetmetadata_key (Union[int, str]): The ID or name of the DatasetMetadata to be retrieved.
 
         Returns:
-            ProjectMetadataRead: The retrieved ProjectMetadataRead object.
+            DatasetMetadataRead: The retrieved DatasetMetadataRead object.
         """
         with Session(self.engine) as session:
-            if isinstance(projectmetadata_key, str):
-                statement = select(ProjectMetadata).where(ProjectMetadata.project_name == projectmetadata_key)
+            if isinstance(datasetmetadata_key, str):
+                statement = select(DatasetMetadata).where(DatasetMetadata.dataset_name == datasetmetadata_key)
                 results = session.exec(statement)
-                projectmetadata = results.one()
+                datasetmetadata = results.one()
             else:
-                projectmetadata = session.get(ProjectMetadata, projectmetadata_key)
-                if not projectmetadata:
-                    raise Exception(f"No projectmetadata to the key {projectmetadata_key}")
-            ProjectMetadataRead.update_forward_refs()
-            projectmetadata_output = ProjectMetadataRead.from_orm(projectmetadata)
-            return projectmetadata_output
+                datasetmetadata = session.get(DatasetMetadata, datasetmetadata_key)
+                if not datasetmetadata:
+                    raise Exception(f"No datasetmetadata to the key {datasetmetadata_key}")
+            DatasetMetadataRead.update_forward_refs()
+            datasetmetadata_output = DatasetMetadataRead.from_orm(datasetmetadata)
+            return datasetmetadata_output
         
         
-    def read_process_activities(self, projectmetadata_key:int) -> List[ProcessActivityRead]:
+    def read_process_activities(self, datasetmetadata_key:int) -> List[ProcessActivityRead]:
         """
-        Retrieves a list of ProcessActivityRead objects associated with the given ProjectMetadata ID.
+        Retrieves a list of ProcessActivityRead objects associated with the given DatasetMetadata ID.
 
         Parameters:
-            projectmetadata_key (int): The ID of the ProjectMetadata.
+            datasetmetadata_key (int): The ID of the DatasetMetadata.
 
         Returns:
             List[ProcessActivityRead]: A list of retrieved ProcessActivityRead objects.
         """
         with Session(self.engine) as session:
-            statement = select(ProcessActivity).where(ProcessActivity.projectmetadata_id == projectmetadata_key)
+            statement = select(ProcessActivity).where(ProcessActivity.datasetmetadata_id == datasetmetadata_key)
             results = session.exec(statement)
             activities = results.all()
             ProcessActivityRead.update_forward_refs()
@@ -147,18 +148,18 @@ class Crud():
                 activities_output.append(ProcessActivityRead.from_orm(activity))
         return activities_output
     
-    def read_emission_activities(self, projectmetadata_key:int) -> List[EmissionActivityRead]:
+    def read_emission_activities(self, datasetmetadata_key:int) -> List[EmissionActivityRead]:
         """
-        Retrieves a list of EmissionActivityRead objects associated with the given ProjectMetadata ID.
+        Retrieves a list of EmissionActivityRead objects associated with the given DatasetMetadata ID.
 
         Parameters:
-            projectmetadata_key (int): The ID of the ProjectMetadata.
+            datasetmetadata_key (int): The ID of the DatasetMetadata.
 
         Returns:
             List[EmissionActivityRead]: A list of retrieved EmissionActivityRead objects.
         """
         with Session(self.engine) as session:
-            statement = select(EmissionActivity).where(EmissionActivity.projectmetadata_id == projectmetadata_key)
+            statement = select(EmissionActivity).where(EmissionActivity.datasetmetadata_id == datasetmetadata_key)
             results = session.exec(statement)
             activities = results.all()
             EmissionActivityRead.update_forward_refs()
@@ -167,20 +168,20 @@ class Crud():
                 activities_output.append(EmissionActivityRead.from_orm(activity))
         return activities_output
 
-    def read_all_projectmetadata(self) -> List[ProjectMetadataRead]:
+    def read_all_datasetmetadata(self) -> List[DatasetMetadataRead]:
         """
-        Retrieves the ProjectMetadataRead object from the database based on the provided key.
+        Retrieves the DatasetMetadataRead object from the database based on the provided key.
 
         Returns:
-            List[ProjectMetadataRead]: The retrieved ProjectMetadataRead objects.
+            List[DatasetMetadataRead]: The retrieved DatasetMetadataRead objects.
         """
         with Session(self.engine) as session:
-            statement = select(ProjectMetadata)
+            statement = select(DatasetMetadata)
             results = session.exec(statement)
-            projectmetadatas = results.all()
-            ProjectMetadataRead.update_forward_refs()
-            projectmetadata_output = [ProjectMetadataRead.from_orm(projectmetadata) for projectmetadata in projectmetadatas]
-            return projectmetadata_output   
+            datasetmetadatas = results.all()
+            DatasetMetadataRead.update_forward_refs()
+            datasetmetadata_output = [DatasetMetadataRead.from_orm(datasetmetadata) for datasetmetadata in datasetmetadatas]
+            return datasetmetadata_output   
     # app = FastAPI()
     # @app.get("/activities/", response_model=List[ActivityRead])
     # def read_heroes():

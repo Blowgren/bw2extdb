@@ -25,12 +25,12 @@ class ProcessActivityBase(ActivityBase):
     reference_product: str = Field(alias="reference product")
 
 class ProcessActivity(ProcessActivityBase, table=True):
-    projectmetadata_id: Optional[int] = Field(default=None, foreign_key="projectmetadata.id")
+    datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
     technosphere_exchanges: Optional[List["TechnosphereExchange"]] = Relationship()
     biosphere_exchanges: Optional[List["BiosphereExchange"]] = Relationship()
 
 class ProcessActivityCreate(ProcessActivityBase):
-    projectmetadata_id: Optional[int] = Field(default=None, foreign_key="projectmetadata.id")
+    datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
     technosphere_exchanges: Optional[List["TechnosphereExchangeCreate"]] = []
     biosphere_exchanges: Optional[List["BiosphereExchangeCreate"]] = []
 
@@ -43,11 +43,11 @@ class EmissionActivityBase(ActivityBase):
     location: Optional[str]
 
 class EmissionActivity(EmissionActivityBase, table=True):
-    projectmetadata_id: Optional[int] = Field(default=None, foreign_key="projectmetadata.id")
+    datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
     categories: Optional[List["Category"]] = Relationship()
 
 class EmissionActivityCreate(EmissionActivityBase):
-    projectmetadata_id: Optional[int] = Field(default=None, foreign_key="projectmetadata.id")
+    datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
     categories: Optional[List["CategoryCreate"]] = []
 
 class EmissionActivityRead(EmissionActivityBase):
@@ -125,35 +125,35 @@ class CategoryRead(CategoryBase):
 class DatabaseDependancyBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     database_name: str
-    projectmetadata_id: Optional[int] = Field(default=None, foreign_key="projectmetadata.id")
+    datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
 
 class DatabaseDependancy(DatabaseDependancyBase, table=True):
-    projectmetadata: "ProjectMetadata" = Relationship(back_populates="databasedependencies")
+    datasetmetadata: "DatasetMetadata" = Relationship(back_populates="databasedependencies")
 
 class DatabaseDependancyCreate(DatabaseDependancyBase):
-    projectmetadata: Optional["ProjectMetadataCreate"]
+    datasetmetadata: Optional["DatasetMetadataCreate"]
 
 class DatabaseDependancyRead(DatabaseDependancyBase):
     pass
 
-""" ProjectMetadata models """
-class ProjectMetadataBase(SQLModel):
+""" DatasetMetadata models """
+class DatasetMetadataBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    project_name: str
-    project_final_date: date
+    dataset_name: str
+    dataset_final_date: date
     description: str
     version: float
     user_name: str
     
-class ProjectMetadata(ProjectMetadataBase, table=True):
-    keywords: List["Keyword"] = Relationship(back_populates="ProjectMetadata")
-    databasedependencies: List[DatabaseDependancy] = Relationship(back_populates="projectmetadata")
+class DatasetMetadata(DatasetMetadataBase, table=True):
+    keywords: List["Keyword"] = Relationship(back_populates="DatasetMetadata")
+    databasedependencies: List[DatabaseDependancy] = Relationship(back_populates="datasetmetadata")
 
-class ProjectMetadataCreate(ProjectMetadataBase):
+class DatasetMetadataCreate(DatasetMetadataBase):
     keywords: Optional[List["KeywordCreate"]] = []
     databasedependencies: Optional[List[DatabaseDependancyCreate]] = []
 
-class ProjectMetadataRead(ProjectMetadataBase):
+class DatasetMetadataRead(DatasetMetadataBase):
     keywords: Optional[List["KeywordRead"]] = []
     databasedependencies: Optional[List[DatabaseDependancyRead]] = []
 
@@ -161,13 +161,13 @@ class ProjectMetadataRead(ProjectMetadataBase):
 class KeywordBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    projectmetadata_id: Optional[int] = Field(default=None, foreign_key="projectmetadata.id")
+    datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
 
 class Keyword(KeywordBase, table=True):
-    ProjectMetadata: "ProjectMetadata" = Relationship(back_populates="keywords")
+    DatasetMetadata: "DatasetMetadata" = Relationship(back_populates="keywords")
 
 class KeywordCreate(KeywordBase):
-    ProjectMetadata: Optional["ProjectMetadataCreate"]
+    DatasetMetadata: Optional["DatasetMetadataCreate"]
 
 class KeywordRead(KeywordBase):
     pass

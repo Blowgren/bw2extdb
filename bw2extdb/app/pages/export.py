@@ -26,8 +26,8 @@ bw2data.projects.set_current(project)
 selected_databases = st.multiselect("Select Databases", bw2data.databases)
 biosphere_version = st.selectbox('biosphere version', ['3.8', '3.9'])
 # ATTN: add warning if no data is specified
-project_description = st.text_area("Project Description")
-project_name = st.text_input("Project Name")
+dataset_description = st.text_area("Dataset Description")
+dataset_name = st.text_input("Dataset Name")
 final_date = st.date_input("Final Date")
 keywords_raw = st.text_input("Keywords (seperate by comma)")
 user_name = st.selectbox("select your user name", ["admin", "test"])
@@ -45,14 +45,14 @@ if st.button("Export"):
         st.session_state.engine = None
     LCIExporter = exporter.LCIExporter(project_name=project, databases=selected_databases, engine=st.session_state.engine, biosphere_version=biosphere_version)
     processactivities, emissionactivities = LCIExporter.extract_lci_data()
-    project_metadata = LCIExporter.create_metadata(
-        project_name, 
-        project_final_date=final_date, 
-        description=project_description,
+    datasetmetadata = LCIExporter.create_metadata(
+        dataset_name, 
+        dataset_final_date=final_date, 
+        description=dataset_description,
         keywords_input=keywords,
         user_name=user_name,
         )
-    LCIExporter.export_to_sql(processactivities=processactivities, project_metadata=project_metadata, emissionactivities=emissionactivities)
+    LCIExporter.export_to_sql(processactivities=processactivities, datasetmetadata=datasetmetadata, emissionactivities=emissionactivities)
     # except Exception as e:
     #     print(f'Error: {str(e)}')
 

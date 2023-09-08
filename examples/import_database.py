@@ -5,7 +5,7 @@ from bw2io import bw2setup
 import pathlib
 
 project_name = 'import_test'
-project_database_name = "test exporting using Mobility example"
+dataset_name = "Mobility example"
 if project_name in bw2data.projects:
     bw2data.projects.delete_project(project_name, delete_dir=True)
 bw2data.projects.set_current(project_name)
@@ -18,7 +18,7 @@ engine = database.create_sqlite_engine(sqlite_file_path_abs)
 database.create_db_and_tables(engine)
 
 """ Extract the data from the sql database to brightway type data """
-LCIImporter = importer.LCIImporterSql(project_name, project_database_name, engine)
+LCIImporter = importer.LCIImporterSql(project_name, dataset_name, engine)
 
 """ Link the database """
 print("statistics of imported data:")
