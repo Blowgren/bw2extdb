@@ -43,7 +43,7 @@ datasetmetadata = LCIExporter.create_metadata(
     dataset_name='Mobility example', 
     dataset_final_date=dataset_final_date, 
     description='',
-    user_name='test_user',
+    user_email_addres='test.user@protonmail.com',
     keywords_input=['test', 'Mobility', 'example']
     )
 

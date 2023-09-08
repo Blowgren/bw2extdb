@@ -55,7 +55,7 @@ class LCIExporter:
             dataset_name: str,
             dataset_final_date: datetime,
             description: str,
-            user_name: str,
+            user_email_addres: str,
             keywords_input: Optional[List] = [],
         ) -> DatasetMetadata:
             Creates metadata for the exported data and dataset.
@@ -81,7 +81,7 @@ class LCIExporter:
             dataset_name="MyLCIProject",
             dataset_final_date=datetime.date(2023, 8, 1),
             description="A sample LCI dataset for demonstration.",
-            user_name="John Doe",
+            user_email_addres="john.doe@protonmail.com",
         )
 
         # Perform completeness checks
@@ -91,7 +91,7 @@ class LCIExporter:
     """
 
     
-    def __init__(self, project_name: str, databases: list[str], engine: Engine, biosphere_version: Union[Literal['3.8'], Literal['3.9']]):
+    def __init__(self, project_name: str, databases: list[str], engine: Engine, biosphere_version: Optional[Union[Literal['3.8'], Literal['3.9']]] = None):
         self.engine = engine
         self.project_name = project_name
         self.databases = databases
@@ -100,13 +100,13 @@ class LCIExporter:
         bw2data.projects.set_current(project_name)
 
     @staticmethod
-    def _get_biosphere_version(biosphere_version) -> str:
+    def _get_biosphere_version(biosphere_version:Optional[Union[Literal['3.8'], Literal['3.9']]] = None) -> str:
         """
         Currently the biosphere version needs to be set manually, because there is no generalized way to do this.
 
         Read more about it here: https://github.com/brightway-lca/brightway2-io
         """
-        if biosphere_version not in ['3.8', '3.9']:
+        if biosphere_version != None and biosphere_version not in ['3.8', '3.9']:
             raise Exception(f'The specified biosphere version: {biosphere_version} is not valid, it must be either 3.8 or 3.9')
         
         # ATTN: The user must export the data with the same bw2io version as they created the biosphere3 database with
@@ -349,7 +349,7 @@ class LCIExporter:
         dataset_name: str, 
         dataset_final_date: date, 
         description: str,
-        user_name: str,
+        user_email_addres: str,
         keywords_input: Optional[List] = [],
     ) -> DatasetMetadataCreate:
         """
@@ -359,7 +359,7 @@ class LCIExporter:
             dataset_name (str): The name of the current dataset in the application.
             dataset_final_date (date): The final date of the LCI dataset.
             description (str): A description of the LCI dataset.
-            user_name (str): The name of the user creating the LCI dataset.
+            user_email_addres (str): The email address of the user creating the LCI dataset.
             keywords_input (Optional[List], optional): A list of keywords associated with the LCI dataset.
                 Defaults to [].
 
@@ -380,7 +380,7 @@ class LCIExporter:
             dataset_final_date = dataset_final_date,
             description = description,
             version = self.create_version(),
-            user_name = user_name
+            user_email_addres = user_email_addres
             )
         datasetmetadatacreate.update_forward_refs()
         datasetmetadatacreate.keywords=keywords

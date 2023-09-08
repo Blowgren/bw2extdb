@@ -17,7 +17,7 @@ class ActivityBase(SQLModel, allow_population_by_field_name = True):
     type: str
     comment: Optional[str] # ATTN: should comments be optional???
     database_old: str
-    biosphere_version: str
+    biosphere_version: Optional[str]
 
 """ Process Activity model """
 class ProcessActivityBase(ActivityBase):
@@ -143,7 +143,7 @@ class DatasetMetadataBase(SQLModel):
     dataset_final_date: date
     description: str
     version: float
-    user_name: str
+    user_email_addres: str
     
 class DatasetMetadata(DatasetMetadataBase, table=True):
     keywords: List["Keyword"] = Relationship(back_populates="DatasetMetadata")

@@ -3,6 +3,7 @@ import sys
 from io import StringIO
 import bw2data
 from bw2extdb.exportImport import exporter
+import re
 
 class OutputCapture:
     def __init__(self):
@@ -30,7 +31,12 @@ dataset_description = st.text_area("Dataset Description")
 dataset_name = st.text_input("Dataset Name")
 final_date = st.date_input("Final Date")
 keywords_raw = st.text_input("Keywords (seperate by comma)")
-user_name = st.selectbox("select your user name", ["admin", "test"])
+user_email_addres = st.text_input("Enter your email address")
+regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+if user_email_addres:
+    if not (re.fullmatch(regex, user_email_addres)):
+        st.error("Invalid Email")
+
 # split  keyword string into keywords
 keywords = keywords_raw.split(',')
 
@@ -42,22 +48,22 @@ if st.button("Export"):
     # try:
     if 'engine' not in st.session_state:
         st.error('Please connect to a database first')
-        st.session_state.engine = None
-    LCIExporter = exporter.LCIExporter(project_name=project, databases=selected_databases, engine=st.session_state.engine, biosphere_version=biosphere_version)
-    processactivities, emissionactivities = LCIExporter.extract_lci_data()
-    datasetmetadata = LCIExporter.create_metadata(
-        dataset_name, 
-        dataset_final_date=final_date, 
-        description=dataset_description,
-        keywords_input=keywords,
-        user_name=user_name,
-        )
-    LCIExporter.export_to_sql(processactivities=processactivities, datasetmetadata=datasetmetadata, emissionactivities=emissionactivities)
-    # except Exception as e:
-    #     print(f'Error: {str(e)}')
+    else:
+        LCIExporter = exporter.LCIExporter(project_name=project, databases=selected_databases, engine=st.session_state.engine, biosphere_version=biosphere_version)
+        processactivities, emissionactivities = LCIExporter.extract_lci_data()
+        datasetmetadata = LCIExporter.create_metadata(
+            dataset_name, 
+            dataset_final_date=final_date, 
+            description=dataset_description,
+            keywords_input=keywords,
+            user_email_addres=user_email_addres,
+            )
+        LCIExporter.export_to_sql(processactivities=processactivities, datasetmetadata=datasetmetadata, emissionactivities=emissionactivities)
+        # except Exception as e:
+        #     print(f'Error: {str(e)}')
 
-    # Reset the standard output
-    sys.stdout = sys.__stdout__
+        # Reset the standard output
+        sys.stdout = sys.__stdout__
 
-    output = capture.get_output()
-    st.text_area("Terminal Output", value=output)
+        output = capture.get_output()
+        st.text_area("Terminal Output", value=output)
