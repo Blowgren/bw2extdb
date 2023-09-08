@@ -20,7 +20,8 @@ conda install pip
 pip install git+https://github.com/Blowgren/bw2extdb@main
 ```
 
-## Quick start - App
+## Quick start
+### App
 The app is an interface and GUI which helps the user to apply the functions for importing and exporting data. The same functions can also be called with a jupyter notebook.
 
 To start the app:
@@ -31,6 +32,8 @@ To start the app:
 ```bash
 bw2extdb-app
 ```
+### Jupyter notebooks
+The are two main juoyter notebooks describing the importing and exporting routine and they can found in the `examples\notebooks` folder. You can follow them in detail to understand how the routines work and the underlying concepts.
 
 ## Structure
 The current package consists of:
@@ -59,6 +62,10 @@ I tried to keep as close to the BW code as possible so I built a python package 
 I have built a simple web-app using streamlit as a GUI for the user to the importing and exporting methods. The same workflow can also be done calling the code in a python script or jupyter notebook.
 
 ## Development ideas:
+- Wrap the CRUD functions in an FastAPI to and communicate to the server via the API, the database engine is on the server
+- Extend this to be another potential backend for Brighway.
+
+## Important links:
 - https://fastapi.tiangolo.com/tutorial/sql-databases/
     - using SQLAlchemy 
     - using pydantic
