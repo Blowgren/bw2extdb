@@ -40,15 +40,17 @@ def create_engine_from_url(sqlite_file_path:str) -> Engine:
 match sql_type_input:
     case SQLtype.SQlite:
         sqlite_path = st.text_input(label='Path to local SQLite database file.')
-        if not os.path.isfile(sqlite_path):
+        new_sqlite_database = st.checkbox('Create a new SQLite Database with the specified path')
+        if not os.path.isfile(sqlite_path) and not new_sqlite_database:
             st.warning('there is no sqlite database at that path')
         else:
             connection = True
-            try:
-                con = sqlite3.connect('file:{}?mode=rw'.format(pathname2url(sqlite_path)), uri=True)
-            except sqlite3.OperationalError:
-                st.warning('The specified file is not a sqlite database.')
-                connection = False
+            if not new_sqlite_database:
+                try:
+                    con = sqlite3.connect('file:{}?mode=rw'.format(pathname2url(sqlite_path)), uri=True)
+                except sqlite3.OperationalError:
+                    st.warning('The specified file is not a sqlite database.')
+                    connection = False
             if connection:
                 engine = create_sqlite_engine(sqlite_path)
                 st.session_state.engine = engine

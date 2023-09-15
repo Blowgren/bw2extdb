@@ -25,7 +25,7 @@ if 'engine' not in st.session_state:
 else:
     crud = Crud(st.session_state.engine)
     datasetmetadatalist = crud.read_all_datasetmetadata()
-    project_names = [datasetmetadata.project_name for datasetmetadata in datasetmetadatalist]
+    project_names = [datasetmetadata.dataset_name for datasetmetadata in datasetmetadatalist]
 database = st.selectbox("Select remote database", project_names)
 project = st.selectbox("Select Brightway project to import to", [project[0] for project in bw2data.projects.report()])
 bw2data.projects.set_current(project)
@@ -35,15 +35,18 @@ databases = list(bw2data.databases)
 ## Select how the imported database should be linked
 link_biosphere = st.checkbox("Link Biosphere")
 if link_biosphere:
-    biosphere_dbs = st.multiselect('Select Technosphere Databases',databases)
+    biosphere_dbs = st.multiselect('Select Biosphere Databases to link with (in the correct order)',databases+['internally'])
     biosphere_matching_list = []
     for biosphere_db in biosphere_dbs:
         matching = {}
-        matching['name'] = biosphere_db
+        if biosphere_db == 'internally':
+            matching['name'] = None
+        else:
+            matching['name'] = biosphere_db
         col1, col2 = st.columns(2)
         # The database to be matched with
         with col1:
-            st.markdown(f'Database \n\n **{biosphere_db}**')
+            st.markdown(f'Database: \n\n **{biosphere_db}**')
         # On what fields the imported and the external database should be linked
         with col2:
             matching['fields'] = st.multiselect('Select the Fields for Matching', ['name', 'location', 'unit', 'reference product', 'code'], key=biosphere_db+'multiselect')
@@ -55,11 +58,12 @@ ext_technosphere_dbs = []
 # Linking to a user specified bw database
 if link_technosphere_ext:
     # Get the list of available databases and remove the current database and the biosphere3 database
-    if 'biosphere3' in databases:
-        databases.remove('biosphere3')
-    if database in databases:
-        databases.remove(database)
-    ext_technosphere_dbs = st.multiselect('Select Technosphere Databases',databases)
+    databases_list = databases.copy()
+    if 'biosphere3' in databases_list:
+        databases_list.remove('biosphere3')
+    if database in databases_list:
+        databases_list.remove(database)
+    ext_technosphere_dbs = st.multiselect('Select Technosphere Databases to link with (in the correct order)',databases_list)
     ext_technosphere_matching_list = []
     # For each of the selected databases specify how the matching should be
     for ext_technosphere_db in ext_technosphere_dbs:
@@ -68,7 +72,7 @@ if link_technosphere_ext:
         col1, col2, col3 = st.columns(3)
         # The database to be matched with
         with col1:
-            st.markdown(f'Database \n\n **{ext_technosphere_db}**')
+            st.markdown(f'Database: \n\n **{ext_technosphere_db}**')
         # What kind/type that database is
         with col2:
             matching['kind'] = st.selectbox("Select Database Kind", ['technosphere','production','biosphere'], key=ext_technosphere_db)
@@ -112,13 +116,20 @@ if st.button("Import"):
                 print('The complete database could be matched and the database is being written.')
                 sys.stdout = sys.__stdout__
                 LCIExporter_app.write_database()
+                import_success = True
             else:
                 print("The database could not be written because there are unlinked exchanges.")
                 # ATTN: There are some bigger probelms with the write_excel
                 excel_path = LCIExporter_app.write_excel(only_unlinked=True)
                 st.markdown(f'The excel file has been written to: \n{excel_path}')
+                import_success = False
     except Exception as e:
         print(f'Error: {str(e)}')
+        import_success = False
+    if import_success:
+        st.success("Dataset imported successfully")
+    else:
+        st.error("Dataset was not imported successfully, check terminal output below")
     # Reset the standard output
     sys.stdout = sys.__stdout__
     output = capture.get_output()

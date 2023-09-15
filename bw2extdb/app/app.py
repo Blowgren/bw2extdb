@@ -7,8 +7,10 @@ def main():
     st.title("Brightway Import Export App")
     st.markdown(
         """
-            This app is a GUI for the use of the python package `bw2extdb`. There are two main functionalities **export** and **import**. 
+            This app is a GUI for the use of the python package `bw2extdb`. There are three main functionalities **SQL connection**, **export** and **import**. 
             They can be accessed in the menu and are described in more detail below.
+            ## SQL connection
+            Connects the SQL database where the LCI data is stored and where the program will export the data to or import the data from
             ## Exporter
             Exports one or multiple databases of a brightway project into an external SQL database.
             ## Importer

@@ -25,7 +25,7 @@ if project != selected_project:
     st.session_state.selected_databases = []
 bw2data.projects.set_current(project)
 selected_databases = st.multiselect("Select Databases", bw2data.databases)
-biosphere_version = st.selectbox('biosphere version', ['3.8', '3.9'])
+biosphere_version = st.selectbox('biosphere version', [None, '3.8', '3.9'])
 # ATTN: add warning if no data is specified
 dataset_description = st.text_area("Dataset Description")
 dataset_name = st.text_input("Dataset Name")
@@ -58,10 +58,16 @@ if st.button("Export"):
             keywords_input=keywords,
             user_email_addres=user_email_addres,
             )
-        LCIExporter.export_to_sql(processactivities=processactivities, datasetmetadata=datasetmetadata, emissionactivities=emissionactivities)
-        # except Exception as e:
-        #     print(f'Error: {str(e)}')
-
+        try:
+            LCIExporter.export_to_sql(processactivities=processactivities, datasetmetadata=datasetmetadata, emissionactivities=emissionactivities)
+            export_success = True
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            export_success = False
+        if export_success:
+            st.success("Dataset exported successfully")
+        else:
+            st.error("Dataset was not exported successfully, check terminal output below")
         # Reset the standard output
         sys.stdout = sys.__stdout__
 
