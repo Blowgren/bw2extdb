@@ -18,7 +18,7 @@ setup(
         # for ipynb:
         "ipykernel",
         # for database:
-        'psycopg2',
+        'psycopg2-binary',
     ],
    entry_points={
         "console_scripts": [

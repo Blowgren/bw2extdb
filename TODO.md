@@ -18,6 +18,7 @@
 - [ ] check why the write `write_unlinked` method does not work
 - [ ] write `check_datasetmetadata_completeness`
 - [ ] implement versioning system in `create_version`
+- [ ] add versions and warning to the dataset, if a dataset already exists on the SQL server
 
 ## Importer
 - [ ] write `check_imported_data` if it makes sense
@@ -31,3 +32,6 @@
 ## App
 - [ ] On the importing routine, display what databases the imported database is dependent on?
 - [ ] Change the user alternatives
+
+## Notebooks
+- [ ] in the export_routine add a visualization how the data is extracted in the extract_lci_data 
