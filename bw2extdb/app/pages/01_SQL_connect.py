@@ -37,6 +37,12 @@ def create_engine_from_url(sqlite_file_path:str) -> Engine:
     database.create_db_and_tables(engine)
     return engine
 
+@st.cache_resource
+def create_engine_postgreSQL(user:str, password:str, server:str, database_name:str) -> Engine:
+    engine = database.create_PostgreSQL_engine(user, password, server, database_name)
+    database.create_db_and_tables(engine)
+    return engine
+
 match sql_type_input:
     case SQLtype.SQlite:
         sqlite_path = st.text_input(label='Path to local SQLite database file.')
@@ -63,6 +69,19 @@ match sql_type_input:
         url = st.text_input(label='URL for database connection:')
         if url:
             engine = create_engine_from_url(url)
+            st.session_state.engine = engine
+            if database.test_connection(engine):
+                st.success('connected to SQL database')
+            else:
+                st.error('could not connect to SQL database')
+
+    case SQLtype.PostgreSQL:
+        user = st.text_input('user')
+        password = st.text_input('password', type='password')
+        server = st.text_input('server')
+        database_name = st.text_input('database')
+        if user and password and server and database_name:
+            engine = create_engine_postgreSQL(user, password, server, database_name)
             st.session_state.engine = engine
             if database.test_connection(engine):
                 st.success('connected to SQL database')

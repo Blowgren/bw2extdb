@@ -4,9 +4,13 @@ from sqlmodel import SQLModel, create_engine
 
 from .models import *
 
-def create_MSsql_engine(user, password, server, database) -> Engine:
-    engine = create_engine(f'mssql+pyodbc://{user}:{password}@{server}/{database}')
+def create_MSsql_engine(user, password, server, database_name) -> Engine:
+    engine = create_engine(f'mssql+pyodbc://{user}:{password}@{server}/{database_name}')
     # engine = create_engine('mssql+pyodbc://VITODB24DEV/SesamLCA')
+    return engine
+
+def create_PostgreSQL_engine(user, password, server, database_name) -> Engine:
+    engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{server}/{database_name}')
     return engine
 
 def create_engine_from_url(url:str) -> Engine:
