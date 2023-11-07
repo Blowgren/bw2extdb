@@ -14,7 +14,7 @@ project_name = 'bw2extdb_test'
 #     bw2data.projects.delete_project(project_name, delete_dir=True)
 bw2data.projects.set_current(project_name)
 bw2io.bw2setup()
-# bw2io.data.add_example_database(overwrite=False)
+bw2io.data.add_example_database(overwrite=True)
 
 """ Define the information for the testing """
 dbs = ['Mobility example']
@@ -25,7 +25,8 @@ dataset_final_date = datetime.date(2022,5,11)
 # Set the SQL postgres url
 url = 'postgresql+psycopg2://bgxpifkr:rdCZJHrLAXUxw5uuKPHzi72TqJsYakgg@dumbo.db.elephantsql.com/bgxpifkr'
 engine = database.create_engine_from_url(url)
-database.create_db_and_tables(engine)
+# database.create_db_and_tables(engine)
+database.init_db(engine)
 
 """ Export the LCI data from brightway to memory """
 # Initialize the LCIexporter with the bw project name and a list of bw databases

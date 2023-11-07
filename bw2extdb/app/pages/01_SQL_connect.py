@@ -9,6 +9,7 @@ from enum import Enum
 class SQLtype(str,Enum):
     SQlite = 'SQLite'
     PostgreSQL = 'PostgreSQL'
+    PostgreSQLmigration = 'PostgresSQL with migration'
     MicrosoftSQL = 'MicrosoftSQL'
     from_URL = 'from URL'
 
@@ -43,6 +44,12 @@ def create_engine_postgreSQL(user:str, password:str, server:str, database_name:s
     database.create_db_and_tables(engine)
     return engine
 
+@st.cache_resource
+def create_engine_postgreSQL_with_migration(user:str, password:str, server:str, database_name:str) -> Engine:
+    engine = database.create_PostgreSQL_engine(user, password, server, database_name)
+    database.init_db(engine)
+    return engine
+
 match sql_type_input:
     case SQLtype.SQlite:
         sqlite_path = st.text_input(label='Path to local SQLite database file.')
@@ -51,11 +58,11 @@ match sql_type_input:
     case SQLtype.from_URL:
         url = st.text_input(label='URL for database connection:', placeholder='dialect+driver://username:password@host:port/database')
 
-    case SQLtype.PostgreSQL:
+    case SQLtype.PostgreSQL | SQLtype.PostgreSQLmigration:
         user = st.text_input('user', value='bgxpifkr')
         password = st.text_input('password', type='password', value='rdCZJHrLAXUxw5uuKPHzi72TqJsYakgg')
         server = st.text_input('server', value='dumbo.db.elephantsql.com')
-        database_name = st.text_input('database', value='bgxpifkr')
+        database_name = st.text_input('database', value='bgxpifkr')        
 
     case _:
         st.error('This type has not been implemented yet.')
@@ -98,6 +105,17 @@ if connect:
                 st.warning('Please specify user, password, server and database name')
             else:
                 engine = create_engine_postgreSQL(user, password, server, database_name)
+                st.session_state.engine = engine
+                if database.test_connection(engine):
+                    st.success('connected to SQL database')
+                else:
+                    st.error('could not connect to SQL database')
+
+        case SQLtype.PostgreSQLmigration:
+            if not (user and password and server and database_name):
+                st.warning('Please specify user, password, server and database name')
+            else:
+                engine = create_engine_postgreSQL_with_migration(user, password, server, database_name)
                 st.session_state.engine = engine
                 if database.test_connection(engine):
                     st.success('connected to SQL database')

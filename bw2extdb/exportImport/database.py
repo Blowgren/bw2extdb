@@ -1,6 +1,9 @@
+import pathlib
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel, create_engine
+from alembic.config import Config
+from alembic import command
 
 from .models import *
 
@@ -40,3 +43,10 @@ def test_connection(engine) -> bool:
 
 def create_db_and_tables(engine):
     SQLModel.metadata.create_all(engine)
+
+def init_db(engine):
+    alembicini_path = pathlib.Path(__file__).parent.parent.parent / 'alembic.ini'
+    alembic_cfg = Config(alembicini_path)
+    with engine.begin() as connection:
+        alembic_cfg.attributes['connection'] = connection
+        command.upgrade(alembic_cfg, "head")

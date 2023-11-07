@@ -72,4 +72,7 @@ I have built a simple web-app using streamlit as a GUI for the user to the impor
     - using restAPI
 - completely stand alone version: https://github.com/tiangolo/full-stack-fastapi-postgresql
 - infromation about ORM: https://www.fullstackpython.com/object-relational-mappers-orms.html
-- potential Docker file for Postgres and sql model migration: https://github.com/testdrivenio/fastapi-sqlmodel-alembic
+- potential Docker file for Postgres and sql model migration: 
+    - https://github.com/testdrivenio/fastapi-sqlmodel-alembic
+    - https://github.com/jonra1993/fastapi-sqlmodel-alembic
+- https://testdriven.io/blog/fastapi-sqlmodel/
