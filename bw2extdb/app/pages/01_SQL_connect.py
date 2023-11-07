@@ -47,46 +47,62 @@ match sql_type_input:
     case SQLtype.SQlite:
         sqlite_path = st.text_input(label='Path to local SQLite database file.')
         new_sqlite_database = st.checkbox('Create a new SQLite Database with the specified path')
-        if not os.path.isfile(sqlite_path) and not new_sqlite_database:
-            st.warning('there is no sqlite database at that path')
-        else:
-            connection = True
-            if not new_sqlite_database:
-                try:
-                    con = sqlite3.connect('file:{}?mode=rw'.format(pathname2url(sqlite_path)), uri=True)
-                except sqlite3.OperationalError:
-                    st.warning('The specified file is not a sqlite database.')
-                    connection = False
-            if connection:
-                engine = create_sqlite_engine(sqlite_path)
+
+    case SQLtype.from_URL:
+        url = st.text_input(label='URL for database connection:', placeholder='dialect+driver://username:password@host:port/database')
+
+    case SQLtype.PostgreSQL:
+        user = st.text_input('user', value='bgxpifkr')
+        password = st.text_input('password', type='password', value='rdCZJHrLAXUxw5uuKPHzi72TqJsYakgg')
+        server = st.text_input('server', value='dumbo.db.elephantsql.com')
+        database_name = st.text_input('database', value='bgxpifkr')
+
+    case _:
+        st.error('This type has not been implemented yet.')
+
+connect = st.button('connect')
+if connect:
+    match sql_type_input:
+        case SQLtype.SQlite:
+            if not os.path.isfile(sqlite_path) and not new_sqlite_database:
+                st.warning('there is no sqlite database at that path')
+            else:
+                connection = True
+                if not new_sqlite_database:
+                    try:
+                        con = sqlite3.connect('file:{}?mode=rw'.format(pathname2url(sqlite_path)), uri=True)
+                    except sqlite3.OperationalError:
+                        st.warning('The specified file is not a sqlite database.')
+                        connection = False
+                if connection:
+                    engine = create_sqlite_engine(sqlite_path)
+                    st.session_state.engine = engine
+                    if database.test_connection(engine):
+                        st.success('connected to SQL database')
+                    else:
+                        st.error('could not connect to SQL database')
+
+        case SQLtype.from_URL:
+            if not url:
+                st.warning('Please specify the URL')
+            else:
+                engine = create_engine_from_url(url)
                 st.session_state.engine = engine
                 if database.test_connection(engine):
                     st.success('connected to SQL database')
                 else:
                     st.error('could not connect to SQL database')
 
-    case SQLtype.from_URL:
-        url = st.text_input(label='URL for database connection:')
-        if url:
-            engine = create_engine_from_url(url)
-            st.session_state.engine = engine
-            if database.test_connection(engine):
-                st.success('connected to SQL database')
+        case SQLtype.PostgreSQL:
+            if not (user and password and server and database_name):
+                st.warning('Please specify user, password, server and database name')
             else:
-                st.error('could not connect to SQL database')
+                engine = create_engine_postgreSQL(user, password, server, database_name)
+                st.session_state.engine = engine
+                if database.test_connection(engine):
+                    st.success('connected to SQL database')
+                else:
+                    st.error('could not connect to SQL database')
 
-    case SQLtype.PostgreSQL:
-        user = st.text_input('user')
-        password = st.text_input('password', type='password')
-        server = st.text_input('server')
-        database_name = st.text_input('database')
-        if user and password and server and database_name:
-            engine = create_engine_postgreSQL(user, password, server, database_name)
-            st.session_state.engine = engine
-            if database.test_connection(engine):
-                st.success('connected to SQL database')
-            else:
-                st.error('could not connect to SQL database')
-
-    case _:
-        st.error('This type has not been implemented yet.')
+        case _:
+            st.error('This type has not been implemented yet.')
