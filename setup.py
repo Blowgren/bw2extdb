@@ -8,6 +8,7 @@ setup(
     description='Tools to import and export data from brightway to an external sql database',
     zip_safe=True,
     packages=find_packages(),
+    python_requires = '>=3.8, <=3.11.5',
     install_requires=[
         'bw2data',
         "bw2io",
@@ -19,6 +20,7 @@ setup(
         "ipykernel",
         # for database:
         'psycopg2-binary',
+        'alembic'
     ],
    entry_points={
         "console_scripts": [
