@@ -350,7 +350,7 @@ class LCIExporter:
         dataset_final_date: date, 
         description: str,
         user_email_addres: str,
-        keywords_input: Optional[List] = [],
+        keywords_input: list = [],
     ) -> DatasetMetadataCreate:
         """
         Creates metadata for the exported data and dataset.
@@ -360,7 +360,7 @@ class LCIExporter:
             dataset_final_date (date): The final date of the LCI dataset.
             description (str): A description of the LCI dataset.
             user_email_addres (str): The email address of the user creating the LCI dataset.
-            keywords_input (Optional[List], optional): A list of keywords associated with the LCI dataset.
+            keywords_input (list, optional): A list of keywords associated with the LCI dataset.
                 Defaults to [].
 
         Returns:
@@ -379,7 +379,7 @@ class LCIExporter:
             dataset_name = dataset_name,
             dataset_final_date = dataset_final_date,
             description = description,
-            version = self.create_version(),
+            version = self.create_version(dataset_name),
             user_email_addres = user_email_addres
             )
         datasetmetadatacreate.update_forward_refs()
@@ -398,9 +398,16 @@ class LCIExporter:
         # Suggest that the other background database should also be imported
         return None
 
-    def create_version(self) -> float:
+    def create_version(self, dataset_name:str) -> float:
         # TO-DO: Implement versioning system
-        version = 0.0
+        datasetmetadatalist = self.crud.read_all_datasetmetadata()
+        datasetmetadataselection = [datasetmetadata for datasetmetadata in datasetmetadatalist if datasetmetadata.dataset_name == dataset_name]
+        if len(datasetmetadataselection) == 0:
+            version = 0
+        else:
+            datasetmetadataselection.sort(key=lambda x: x.version, reverse=True)
+            version = datasetmetadataselection[0].version + 1
+            warnings.warn('There are multiple version to the dataset with the name: {}, the dataset will be saved with the new version number: {}'.format(dataset_name, version))
         return version
     
     def export_to_sql(self, processactivities: List[ProcessActivityCreate], datasetmetadata: DatasetMetadataCreate, emissionactivities: Optional[List[EmissionActivityCreate]] = []) -> None:

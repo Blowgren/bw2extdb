@@ -1,6 +1,7 @@
 from typing import List, Tuple, Dict, Any, Union
 import collections
 from sqlalchemy.engine.base import Engine
+import warnings
 
 import bw2data
 from bw2io.importers.base_lci import LCIImporter
@@ -80,7 +81,7 @@ class LCIImporterSql(LCIImporter):
         self.data = self.process_activities(datasetmetadata_id)
         self.database_dependencies = self.get_database_dependencies(datasetmetadata_id)
 
-    def get_datasetmetadata_id(self, dataset_name: str):
+    def get_datasetmetadata_id(self, dataset_name: str) -> int:
         """
         Get the metadata ID of the dataset from the specified dataset name.
 
@@ -90,9 +91,22 @@ class LCIImporterSql(LCIImporter):
         Returns:
             int: The metadata ID of the dataset.
         """
-        datasetmetadata = self.crud.read_datasetmetadata(datasetmetadata_key=dataset_name)
-        return datasetmetadata.id
-
+        datasetmetadatalist = self.crud.read_all_datasetmetadata()
+        datasetmetadataselection = [datasetmetadata for datasetmetadata in datasetmetadatalist if datasetmetadata.dataset_name == dataset_name]
+        if len(datasetmetadataselection) == 0:
+            raise Exception(f"No datasetmetadata to the name: {dataset_name}") 
+        elif len(datasetmetadataselection) == 1:
+            return datasetmetadataselection[0].id
+        else:
+            datasetmetadataselection.sort(key=lambda x: x.version, reverse=True)
+            latest_version = datasetmetadataselection[0].version
+            datasetmetadatasubselection = [datasetmetadata for datasetmetadata in datasetmetadatalist if datasetmetadata.version == latest_version]
+            if len(datasetmetadatasubselection) > 1:
+                raise Exception(f"There are multiple versions to the dataset: {dataset_name}")
+            else:
+                warnings.warn('There are multiple version to the dataset with the name: {}, the latest version is chosen (version: {})'.format(dataset_name, datasetmetadataselection[0].version))
+                return datasetmetadataselection[0].id
+            
     def process_activities(self, datasetmetadata_id: int) -> list[dict]:
         """
         Process the activities and their exchanges from the specified dataset metadata ID.

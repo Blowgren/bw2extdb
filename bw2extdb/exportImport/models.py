@@ -26,8 +26,8 @@ class ProcessActivityBase(ActivityBase):
 
 class ProcessActivity(ProcessActivityBase, table=True):
     datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
-    technosphere_exchanges: Optional[List["TechnosphereExchange"]] = Relationship()
-    biosphere_exchanges: Optional[List["BiosphereExchange"]] = Relationship()
+    technosphere_exchanges: Optional[List["TechnosphereExchange"]] = Relationship(back_populates='processactivity')
+    biosphere_exchanges: Optional[List["BiosphereExchange"]] = Relationship(back_populates='processactivity')
 
 class ProcessActivityCreate(ProcessActivityBase):
     datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
@@ -35,6 +35,7 @@ class ProcessActivityCreate(ProcessActivityBase):
     biosphere_exchanges: Optional[List["BiosphereExchangeCreate"]] = []
 
 class ProcessActivityRead(ProcessActivityBase):
+    id: int
     technosphere_exchanges: Optional[List["TechnosphereExchangeRead"]] = []
     biosphere_exchanges: Optional[List["BiosphereExchangeRead"]] = []
 
@@ -44,13 +45,14 @@ class EmissionActivityBase(ActivityBase):
 
 class EmissionActivity(EmissionActivityBase, table=True):
     datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
-    categories: Optional[List["Category"]] = Relationship()
+    categories: Optional[List["Category"]] = Relationship(back_populates='emissionactivity')
 
 class EmissionActivityCreate(EmissionActivityBase):
     datasetmetadata_id: Optional[int] = Field(default=None, foreign_key="datasetmetadata.id")
     categories: Optional[List["CategoryCreate"]] = []
 
 class EmissionActivityRead(EmissionActivityBase):
+    id: int
     categories: Optional[List["CategoryRead"]] = []
 
 """ Exchange base model """
@@ -76,11 +78,12 @@ class TechnosphereExchangeBase(ExchangeBase, allow_population_by_field_name = Tr
     reference_product: str = Field(alias="reference product")
 
 class TechnosphereExchange(TechnosphereExchangeBase, table=True):
-    categories: Optional[List["Category"]] = Relationship()
+    categories: Optional[List["Category"]] = Relationship(back_populates='technosphereexchange')
+    processactivity: Optional[ProcessActivity] = Relationship(back_populates='technosphere_exchanges')
 
 class TechnosphereExchangeCreate(TechnosphereExchangeBase):
     categories: Optional[List["CategoryCreate"]] = []
-    activity: Optional[ProcessActivityCreate]
+    # activity: Optional[ProcessActivityCreate]
 
 class TechnosphereExchangeRead(TechnosphereExchangeBase):
     categories: Optional[List["CategoryRead"]] = []
@@ -91,11 +94,12 @@ class BiosphereExchangeBase(ExchangeBase):
     location: Optional[str]
 
 class BiosphereExchange(BiosphereExchangeBase, table=True):
-    categories: Optional[List["Category"]] = Relationship()
+    categories: Optional[List["Category"]] = Relationship(back_populates='biospereexchange')
+    processactivity: Optional[ProcessActivity] = Relationship(back_populates='biosphere_exchanges')
 
 class BiosphereExchangeCreate(BiosphereExchangeBase):
     categories: Optional[List["CategoryCreate"]] = []
-    activity: Optional[ProcessActivityCreate]
+    # activity: Optional[ProcessActivityCreate]
 
 class BiosphereExchangeRead(BiosphereExchangeBase):
     categories: Optional[List["CategoryRead"]] = []
@@ -109,14 +113,13 @@ class CategoryBase(SQLModel):
     emissionacitivity_id: Optional[int] = Field(default=None, foreign_key="emissionactivity.id")
 
 class Category(CategoryBase, table=True):
-    pass
-    # technosphere_exchanges: Optional[TechnosphereExchange] = Relationship(back_populates="categories")
-    # biosphere_exchanges: Optional[BiosphereExchange] = Relationship(back_populates="categories")
+    # pass
+    technosphereexchange: Optional[TechnosphereExchange] = Relationship(back_populates='categories')
+    biospereexchange: Optional[BiosphereExchange] = Relationship(back_populates='categories')
+    emissionactivity: Optional[EmissionActivity] = Relationship(back_populates='categories')
 
 class CategoryCreate(CategoryBase):
     pass
-    # technosphere_exchanges: Optional[TechnosphereExchangeCreate] = []
-    # biosphere_exchanges: Optional[BiosphereExchangeCreate] = []
 
 class CategoryRead(CategoryBase):
     pass
@@ -131,7 +134,8 @@ class DatabaseDependancy(DatabaseDependancyBase, table=True):
     datasetmetadata: "DatasetMetadata" = Relationship(back_populates="databasedependencies")
 
 class DatabaseDependancyCreate(DatabaseDependancyBase):
-    datasetmetadata: Optional["DatasetMetadataCreate"]
+    # datasetmetadata: Optional["DatasetMetadataCreate"]
+    pass
 
 class DatabaseDependancyRead(DatabaseDependancyBase):
     pass
@@ -142,7 +146,7 @@ class DatasetMetadataBase(SQLModel):
     dataset_name: str
     dataset_final_date: date
     description: str
-    version: float
+    version: int
     user_email_addres: str
     
 class DatasetMetadata(DatasetMetadataBase, table=True):
@@ -154,6 +158,7 @@ class DatasetMetadataCreate(DatasetMetadataBase):
     databasedependencies: Optional[List[DatabaseDependancyCreate]] = []
 
 class DatasetMetadataRead(DatasetMetadataBase):
+    id: int
     keywords: Optional[List["KeywordRead"]] = []
     databasedependencies: Optional[List[DatabaseDependancyRead]] = []
 
@@ -167,7 +172,8 @@ class Keyword(KeywordBase, table=True):
     DatasetMetadata: "DatasetMetadata" = Relationship(back_populates="keywords")
 
 class KeywordCreate(KeywordBase):
-    DatasetMetadata: Optional["DatasetMetadataCreate"]
+    # DatasetMetadata: Optional["DatasetMetadataCreate"]
+    pass
 
 class KeywordRead(KeywordBase):
     pass

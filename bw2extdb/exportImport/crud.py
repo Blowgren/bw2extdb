@@ -19,39 +19,28 @@ class Crud():
         Returns:
             None
         """
-        # ATTN: This method should only have one commit, by using relationships in the database models
         with Session(self.engine) as session:
             for activity_data in activities:
                 activity = ProcessActivity.from_orm(activity_data)
                 activity.datasetmetadata_id = datasetmetadata_id
-                session.add(activity)
-                session.commit()
-                session.refresh(activity)
-                if activity_data.biosphere_exchanges:
+                if activity_data.biosphere_exchanges:   
                     for biosphere_exchange_data in activity_data.biosphere_exchanges:
-                        biosphere_exchange_data.activity_id = activity.id
                         biosphere_exchange = BiosphereExchange.from_orm(biosphere_exchange_data)
-                        session.add(biosphere_exchange)
-                        session.commit()
-                        session.refresh(biosphere_exchange)
                         if biosphere_exchange_data.categories:
                             for category_data in biosphere_exchange_data.categories:
-                                category_data.biosphereexchange_id = biosphere_exchange.id
                                 category = Category.from_orm(category_data)
-                                session.add(category)
+                                biosphere_exchange.categories.append(category)
+                        activity.biosphere_exchanges.append(biosphere_exchange)
                 if activity_data.technosphere_exchanges:
                     for technosphere_exchange_data in activity_data.technosphere_exchanges:
-                        technosphere_exchange_data.activity_id = activity.id
                         technosphere_exchange = TechnosphereExchange.from_orm(technosphere_exchange_data)
-                        session.add(technosphere_exchange)
-                        session.commit()
-                        session.refresh(technosphere_exchange)
                         if technosphere_exchange_data.categories:
                             for category_data in technosphere_exchange_data.categories:
-                                category_data.technosphereexchange_id = technosphere_exchange.id
                                 category = Category.from_orm(category_data)
-                                session.add(category)
-                session.commit()
+                                technosphere_exchange.categories.append(category)
+                        activity.technosphere_exchanges.append(technosphere_exchange)
+                session.add(activity)
+            session.commit()
             # return activities
 
     def create_emission_activities(self, activities: List[EmissionActivityCreate], datasetmetadata_id:int) -> None:
@@ -73,7 +62,7 @@ class Crud():
                 session.commit()
             # return activities
         
-    def create_datasetmetadata(self, datasetmetadatacreate: DatasetMetadataCreate) -> None:
+    def create_datasetmetadata(self, datasetmetadatacreate: DatasetMetadataCreate) -> DatasetMetadata:
         """
         Creates a DatasetMetadata object in the database.
 
@@ -102,29 +91,36 @@ class Crud():
             session.refresh(datasetmetadata)
             return datasetmetadata
 
-    def read_datasetmetadata(self, datasetmetadata_key: Union[int, str]) -> DatasetMetadataRead:
+    def read_datasetmetadata(self, datasetmetadata_key: int) -> DatasetMetadataRead:
         """
         Retrieves the DatasetMetadataRead object from the database based on the provided key.
 
         Parameters:
-            datasetmetadata_key (Union[int, str]): The ID or name of the DatasetMetadata to be retrieved.
+            datasetmetadata_key (int): The ID of the DatasetMetadata to be retrieved.
 
         Returns:
             DatasetMetadataRead: The retrieved DatasetMetadataRead object.
         """
         with Session(self.engine) as session:
-            if isinstance(datasetmetadata_key, str):
-                statement = select(DatasetMetadata).where(DatasetMetadata.dataset_name == datasetmetadata_key)
-                results = session.exec(statement)
-                datasetmetadata = results.one()
-            else:
-                datasetmetadata = session.get(DatasetMetadata, datasetmetadata_key)
-                if not datasetmetadata:
-                    raise Exception(f"No datasetmetadata to the key {datasetmetadata_key}")
+            datasetmetadata = session.get(DatasetMetadata, datasetmetadata_key)
+            if not datasetmetadata:
+                raise Exception(f"No datasetmetadata to the key {datasetmetadata_key}")
             DatasetMetadataRead.update_forward_refs()
             datasetmetadata_output = DatasetMetadataRead.from_orm(datasetmetadata)
             return datasetmetadata_output
-        
+    
+    def read_all_datasetmetadata(self) -> List[DatasetMetadataRead]:
+        with Session(self.engine) as session:
+            statement = select(DatasetMetadata)
+            results = session.exec(statement)
+            datasetmetadatalist = results.all()
+            if not datasetmetadatalist:
+                raise Exception(f"there is no datasetmetadata")
+            DatasetMetadataRead.update_forward_refs()
+            datasetmetadatalist_output = []
+            for datasetmetadata in datasetmetadatalist:
+                datasetmetadatalist_output.append(DatasetMetadataRead.from_orm(datasetmetadata))
+            return datasetmetadatalist_output
         
     def read_process_activities(self, datasetmetadata_key:int) -> List[ProcessActivityRead]:
         """
